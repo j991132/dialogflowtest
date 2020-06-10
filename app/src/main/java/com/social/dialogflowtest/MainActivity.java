@@ -7,8 +7,11 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.view.View;
 import android.widget.TextView;
+
+import java.util.Locale;
 
 import ai.api.AIListener;
 import ai.api.android.AIConfiguration;
@@ -21,6 +24,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     AIService aiService;
     TextView t;
+    TextToSpeech textToSpeech;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +45,14 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 AIConfiguration.RecognitionEngine.System);
         aiService = AIService.getService(this, config);
         aiService.setListener(this);
+        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+           if(status != TextToSpeech.ERROR){
+               textToSpeech.setLanguage(Locale.US);
+           }
+            }
+        });
 
     }
     protected void makeRequest() {
@@ -76,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         Result result1=result.getResult();
 
         t.setText("Query "+result1.getResolvedQuery()+" action: "+result1.getAction()+"풀필먼트  "+result1.getFulfillment().getSpeech() );
+        textToSpeech.speak(result1.getFulfillment().getSpeech(), TextToSpeech.QUEUE_FLUSH, null);
     }
 
     @Override
