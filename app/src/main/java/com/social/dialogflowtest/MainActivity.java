@@ -5,10 +5,14 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.Locale;
@@ -25,12 +29,18 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     AIService aiService;
     TextView t;
     TextToSpeech textToSpeech;
+    private ListView chat_view;
+    ArrayAdapter<String> adapter;
+    private ListView chatbot_view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         t= (TextView) findViewById(R.id.textView);
+        chatbot_view = (ListView)findViewById(R.id.chatbot_view);
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1);
+        chatbot_view.setAdapter(adapter);
 
         int permission = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO);
@@ -83,11 +93,22 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     public void buttonClicked(View view){
         aiService.startListening();
     }
+    @SuppressLint("ResourceType")
     @Override
     public void onResult(AIResponse result) {
         Result result1=result.getResult();
 
         t.setText("Query "+result1.getResolvedQuery()+" action: "+result1.getAction()+"풀필먼트  "+result1.getFulfillment().getSpeech() );
+//View c;
+//c= findViewById(android.R.id.text1);
+
+//        Chatbot chatbot = new Chatbot(result1.getResolvedQuery());
+        if(!result1.getFulfillment().getSpeech().equals("Sorry, can you say that again?")) {
+//            c.parentView.setGravity(Gravity.LEFT);
+            adapter.add(result1.getResolvedQuery());
+
+            adapter.add(result1.getFulfillment().getSpeech());
+        }
         textToSpeech.speak(result1.getFulfillment().getSpeech(), TextToSpeech.QUEUE_FLUSH, null);
     }
 
@@ -115,4 +136,5 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     public void onListeningFinished() {
 
     }
+
 }
