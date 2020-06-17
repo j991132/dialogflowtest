@@ -10,8 +10,10 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -32,6 +34,9 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     private ListView chat_view;
     ArrayAdapter<String> adapter;
     private ListView chatbot_view;
+    private LinearLayout chat_layout;
+    private TextView text_chat;
+    View convertView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +44,14 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         setContentView(R.layout.activity_main);
         t= (TextView) findViewById(R.id.textView);
         chatbot_view = (ListView)findViewById(R.id.chatbot_view);
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1);
+        adapter = new ArrayAdapter<String>(this, R.layout.chatitem, R.id.text_chat);
         chatbot_view.setAdapter(adapter);
+
+        chat_layout = (LinearLayout)findViewById(R.id.chat_layout);
+        text_chat = (TextView)findViewById(R.id.text_chat);
+
+//        LayoutInflater inflater = (LayoutInflater)chat_layout
+//                convertView = chat_layout.inflate(R.layout.chatitem, parent.get, false);
 
         int permission = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO);
@@ -105,8 +116,10 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 //        Chatbot chatbot = new Chatbot(result1.getResolvedQuery());
         if(!result1.getFulfillment().getSpeech().equals("Sorry, can you say that again?")) {
 //            c.parentView.setGravity(Gravity.LEFT);
+//            chat_layout.setGravity(Gravity.LEFT);
+            text_chat.setGravity(Gravity.LEFT);
             adapter.add(result1.getResolvedQuery());
-
+            text_chat.setGravity(Gravity.RIGHT);
             adapter.add(result1.getFulfillment().getSpeech());
         }
         textToSpeech.speak(result1.getFulfillment().getSpeech(), TextToSpeech.QUEUE_FLUSH, null);
