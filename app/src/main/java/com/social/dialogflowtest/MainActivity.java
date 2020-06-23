@@ -7,8 +7,10 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +19,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 import ai.api.AIListener;
@@ -36,7 +39,10 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     private ListView chatbot_view;
     private LinearLayout chat_layout;
     private TextView text_chat;
-    View convertView;
+    ArrayList list = new ArrayList();
+    int a=0;
+    private ChatAdapter adapter1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,14 +50,16 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         setContentView(R.layout.activity_main);
         t= (TextView) findViewById(R.id.textView);
         chatbot_view = (ListView)findViewById(R.id.chatbot_view);
-        adapter = new ArrayAdapter<String>(this, R.layout.chatitem, R.id.text_chat);
-        chatbot_view.setAdapter(adapter);
+
+        adapter1 = new ChatAdapter(getApplicationContext(), R.layout.chatitem, list, a);
+
+//        adapter = new ArrayAdapter<String>(this, R.layout.chatitem, R.id.text_chat);
+        chatbot_view.setAdapter(adapter1);
 
         chat_layout = (LinearLayout)findViewById(R.id.chat_layout);
         text_chat = (TextView)findViewById(R.id.text_chat);
 
-//        LayoutInflater inflater = (LayoutInflater)chat_layout
-//                convertView = chat_layout.inflate(R.layout.chatitem, parent.get, false);
+
 
         int permission = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO);
@@ -70,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
             @Override
             public void onInit(int status) {
            if(status != TextToSpeech.ERROR){
+               Log.e("TTS 상태 에러아님",""+status);
                textToSpeech.setLanguage(Locale.US);
            }
             }
@@ -103,26 +112,31 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     public void buttonClicked(View view){
         aiService.startListening();
+        Log.e("버튼 누름","");
     }
     @SuppressLint("ResourceType")
     @Override
     public void onResult(AIResponse result) {
         Result result1=result.getResult();
 
-        t.setText("Query "+result1.getResolvedQuery()+" action: "+result1.getAction()+"풀필먼트  "+result1.getFulfillment().getSpeech() );
-//View c;
-//c= findViewById(android.R.id.text1);
+//        t.setText("Query "+result1.getResolvedQuery()+" action: "+result1.getAction()+"풀필먼트  "+result1.getFulfillment().getSpeech() );
 
-//        Chatbot chatbot = new Chatbot(result1.getResolvedQuery());
         if(!result1.getFulfillment().getSpeech().equals("Sorry, can you say that again?")) {
-//            c.parentView.setGravity(Gravity.LEFT);
-//            chat_layout.setGravity(Gravity.LEFT);
-            text_chat.setGravity(Gravity.LEFT);
-            adapter.add(result1.getResolvedQuery());
-            text_chat.setGravity(Gravity.RIGHT);
-            adapter.add(result1.getFulfillment().getSpeech());
+
+            list.add(result1.getResolvedQuery());
+            adapter1.notifyDataSetChanged();
+//            adapter.add(result1.getResolvedQuery());
+            a=1;
+
+            list.add(result1.getFulfillment().getSpeech());
+            adapter1.notifyDataSetChanged();
+//            adapter.add(result1.getFulfillment().getSpeech());
         }
-        textToSpeech.speak(result1.getFulfillment().getSpeech(), TextToSpeech.QUEUE_FLUSH, null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            textToSpeech.speak(result1.getFulfillment().getSpeech(), TextToSpeech.QUEUE_FLUSH, null, null);
+        }else{
+            textToSpeech.speak(result1.getFulfillment().getSpeech(), TextToSpeech.QUEUE_FLUSH, null);
+        }
     }
 
     @Override
@@ -149,5 +163,14 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     public void onListeningFinished() {
 
     }
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // TTS 객체가 남아있다면 실행을 중지하고 메모리에서 제거한다.
+        if(textToSpeech != null){
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+            textToSpeech = null;
+        }
+    }
 }
